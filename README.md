@@ -15,3 +15,4 @@ optional arguments:
   --dictionary DICTIONARY list of paths to test, default: paths.dict
  ```
 
+![Screenshot of usage](http://nyxgeek.com/ntlmscan.py_use3.png)
