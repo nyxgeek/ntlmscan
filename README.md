@@ -22,5 +22,15 @@ optional arguments:
   --outfile OUTFILE       file to write results to
   --dictionary DICTIONARY list of paths to test, default: paths.dict
  ```
+ 
+ 
+ Examples:
+ ```
+ python3 ntlmscan.py --url https://autodiscover.domain.com/autodiscover
+ 
+ python3 ntlmscan.py --host autodiscover.domain.com
+ 
+ python3 ntlmscan.py --hostfile hosts.txt --dictionary big.txt
+ ```
 
 ![Screenshot of usage](http://nyxgeek.com/ntlmscan.py_use3.png)
