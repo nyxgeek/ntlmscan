@@ -85,8 +85,8 @@ def makeRequests(url):
             print("[+] FOUND NTLM - {}".format(url))
 
             # here we open the file quick to write to it - we might want to relocate this open/close to outside here
-            outfilestream = open(outputfile,"w+")
-            outfilestream.write("[+] FOUND NTLM - {}".format(url))
+            outfilestream = open(outputfile,"a")
+            outfilestream.write("[+] FOUND NTLM - {}\n".format(url))
             outfilestream.close()
 
     except requests.exceptions.ReadTimeout:
