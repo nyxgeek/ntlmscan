@@ -14,4 +14,4 @@ optional arguments:
   --outfile OUTFILE       file to write results to
   --dictionary DICTIONARY list of paths to test, default: paths.dict
  ```
-![Screenshot of usage](http://nyxgeek.com/ntlmscan.py_use.png)
+
