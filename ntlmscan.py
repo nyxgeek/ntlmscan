@@ -4,7 +4,7 @@
 # 2019.10.22 - @nyxgeek
 #
 # NTLM scanner - just looks for HTTP header that specifies NTLM auth
-# takes a url, a hostname, or a list of hosts
+# takes a url, or a list of hosts
 
 
 import requests
@@ -81,8 +81,9 @@ def makeRequests(url):
     try:
         r = requests.head(url, timeout=3,verify=False)
         if 'WWW-Authenticate' in r.headers:
+            #print(r.headers)
             checkNTLM = r. headers['WWW-Authenticate']
-            if checkNTLM == "NTLM":
+            if "NTLM" in checkNTLM:
                 print("[+] FOUND NTLM - {}".format(url))
 
                 # here we open the file quick to write to it - we might want to relocate this open/close to outside here
