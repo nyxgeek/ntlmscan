@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--hostfile", help="file containing ips or hostnames to test")
     parser.add_argument("--outfile", help="file to write results to")
     parser.add_argument("--dictionary", help="list of paths to test, default: paths.dict")
+    parser.add_argument("--debug", help="show request headers",action="store_true",default=False)
     args = parser.parse_args()
 
     # check to see if a custom outfile has been specified
@@ -45,7 +46,11 @@ def main():
     pathdict = open(dictionaryfile, 'r')
     pathlist = pathdict.readlines()
     pathdict.close()
-
+    
+    if args.debug:
+        global debugoutput
+        debugoutput = args.debug
+    
    ## NOW, HERE ARE THE MAIN WORKHORSE FUNCTION CALLS ##
 
     if args.url:
@@ -80,8 +85,9 @@ def makeRequests(url):
     print("[-] Testing path {}".format(url))
     try:
         r = requests.head(url, timeout=3,verify=False)
+        if debugoutput:
+            print(r.headers)
         if 'WWW-Authenticate' in r.headers:
-            #print(r.headers)
             checkNTLM = r. headers['WWW-Authenticate']
             if "NTLM" in checkNTLM:
                 print("[+] FOUND NTLM - {}".format(url))
