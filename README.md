@@ -21,6 +21,7 @@ optional arguments:
   --hostfile HOSTFILE     file containing ips or hostnames to test
   --outfile OUTFILE       file to write results to
   --dictionary DICTIONARY list of paths to test, default: paths.dict
+  --debug                 show request headers
  ```
  
  
