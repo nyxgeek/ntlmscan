@@ -17,6 +17,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 dictionaryfile = 'paths.dict'
 outputfile = 'output.log'
+debugoutput = False
 
 def main():
 
