@@ -11,13 +11,16 @@ import requests
 from requests.exceptions import Timeout
 import argparse
 import sys
-#import logging
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from urllib.parse import urlparse
+import os
 
 dictionaryfile = 'paths.dict'
 outputfile = 'output.log'
 debugoutput = False
+nmapscan = False
+foundURLs = []
 
 def main():
 
@@ -27,6 +30,7 @@ def main():
     parser.add_argument("--hostfile", help="file containing ips or hostnames to test")
     parser.add_argument("--outfile", help="file to write results to")
     parser.add_argument("--dictionary", help="list of paths to test, default: paths.dict")
+    parser.add_argument("--nmap", help="run nmap when complete",action="store_true",default=False)
     parser.add_argument("--debug", help="show request headers",action="store_true",default=False)
     args = parser.parse_args()
 
@@ -51,7 +55,12 @@ def main():
     if args.debug:
         global debugoutput
         debugoutput = args.debug
-    
+
+    if args.nmap:
+        global nmapscan
+        nmapscan = True
+        
+        
    ## NOW, HERE ARE THE MAIN WORKHORSE FUNCTION CALLS ##
 
     if args.url:
@@ -79,7 +88,22 @@ def main():
                 makeRequests(testurl)
 
     print("\r\nTesting complete")
+    
+    if nmapscan:
+        nmapScanner(foundURLs)
 
+def nmapScanner(foundURLs):
+    #if nmap was selected, let's do some scans
+    for targeturl in foundURLs:
+        print("Initializing nmap scan for {}".format(targeturl))
+        parsedURL = urlparse(targeturl)
+        targethost = parsedURL.hostname
+        targetpath = parsedURL.path
+        print("host:\t{host}\npath:\t{path}".format(host=targethost,path=targetpath))
+
+        nmapcmd = "nmap -Pn -sT -p443 --script=http-ntlm-info --script-args=http-ntlm-info.root={path} {host}".format(path=targetpath,host=targethost)
+        returned_nmap = os.system(nmapcmd)
+        print(returned_nmap)
 
 def makeRequests(url):
     #print("\r[-] Testing path {}".format(url), end='')
@@ -92,6 +116,10 @@ def makeRequests(url):
             checkNTLM = r. headers['WWW-Authenticate']
             if "NTLM" in checkNTLM:
                 print("[+] FOUND NTLM - {}".format(url))
+                
+                #append to our foundURLs list
+                global foundURLs
+                foundURLs.append(url)
 
                 # here we open the file quick to write to it - we might want to relocate this open/close to outside here
                 outfilestream = open(outputfile,"a")
