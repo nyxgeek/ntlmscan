@@ -5,6 +5,7 @@ reliable targets are:
 * OWA servers
 * Skype for Business/Lync servers
 * Autodiscover servers (autodiscover.domain.com and lyncdiscover.domain.com)
+* ADFS servers
 
 
 once identified, use nmap and the [http-ntlm-info](https://nmap.org/nsedoc/scripts/http-ntlm-info.html) script to extract internal domain/server information 
