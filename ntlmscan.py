@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-# 2019.10.22 - @nyxgeek
+# 2019.10.22 - @nyxgeek - TrustedSec
 #
 # NTLM scanner - just looks for HTTP header that specifies NTLM auth
 # takes a url, or a list of hosts
@@ -51,7 +51,7 @@ def main():
     pathdict = open(dictionaryfile, 'r')
     pathlist = pathdict.readlines()
     pathdict.close()
-    
+
     if args.debug:
         global debugoutput
         debugoutput = args.debug
@@ -59,8 +59,8 @@ def main():
     if args.nmap:
         global nmapscan
         nmapscan = True
-        
-        
+
+
    ## NOW, HERE ARE THE MAIN WORKHORSE FUNCTION CALLS ##
 
     if args.url:
@@ -70,6 +70,8 @@ def main():
     if args.host:
         for urlpath in pathlist:
             urlpath = urlpath.rstrip()
+            if urlpath.startswith("/"):
+                urlpath = urlpath[1:]
             testurl = "https://" + args.host + "/" + urlpath
             makeRequests(testurl)
 
@@ -84,11 +86,13 @@ def main():
 
             for urlpath in pathlist:
                 urlpath = urlpath.rstrip()
+                if urlpath.startswith("/"):
+                    urlpath = urlpath[1:]
                 testurl = "https://" + hostname + "/" + urlpath
                 makeRequests(testurl)
 
     print("\r\nTesting complete")
-    
+
     if nmapscan:
         nmapScanner(foundURLs)
 
@@ -116,7 +120,7 @@ def makeRequests(url):
             checkNTLM = r. headers['WWW-Authenticate']
             if "NTLM" in checkNTLM:
                 print("[+] FOUND NTLM - {}".format(url))
-                
+
                 #append to our foundURLs list
                 global foundURLs
                 foundURLs.append(url)
