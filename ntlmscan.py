@@ -6,7 +6,8 @@
 # NTLM scanner - just looks for HTTP header that specifies NTLM auth
 # takes a url, or a list of hosts
 
-
+from queue import Queue
+import threading
 import requests
 from requests.exceptions import Timeout
 import argparse
@@ -21,6 +22,16 @@ outputfile = 'output.log'
 debugoutput = False
 nmapscan = False
 foundURLs = []
+add_lock = threading.Lock()
+queue = Queue()
+
+def process_queue():
+    while True:
+        url = queue.get()
+        makeRequests(url)
+        queue.task_done()
+
+
 
 def main():
 
@@ -64,7 +75,7 @@ def main():
    ## NOW, HERE ARE THE MAIN WORKHORSE FUNCTION CALLS ##
 
     if args.url:
-        makeRequests(args.url)
+        queue.put(args.url)
 
 
     if args.host:
@@ -73,7 +84,7 @@ def main():
             if urlpath.startswith("/"):
                 urlpath = urlpath[1:]
             testurl = "https://" + args.host + "/" + urlpath
-            makeRequests(testurl)
+            queue.put(testurl)
 
 
     if args.hostfile:
@@ -89,8 +100,14 @@ def main():
                 if urlpath.startswith("/"):
                     urlpath = urlpath[1:]
                 testurl = "https://" + hostname + "/" + urlpath
-                makeRequests(testurl)
+                queue.put(testurl)
+    # Get ready to queue some requests
+    for i in range(100):
+        t = threading.Thread(target=process_queue)
+        t.daemon = True
+        t.start()
 
+    queue.join()
     print("\r\nTesting complete")
 
     if nmapscan:
@@ -110,6 +127,7 @@ def nmapScanner(foundURLs):
         print(returned_nmap)
 
 def makeRequests(url):
+    global foundURLs
     #print("\r[-] Testing path {}".format(url), end='')
     print("[-] Testing path {}".format(url))
     try:
@@ -119,16 +137,13 @@ def makeRequests(url):
         if 'WWW-Authenticate' in r.headers:
             checkNTLM = r. headers['WWW-Authenticate']
             if "NTLM" in checkNTLM:
-                print("[+] FOUND NTLM - {}".format(url))
-
-                #append to our foundURLs list
-                global foundURLs
-                foundURLs.append(url)
-
-                # here we open the file quick to write to it - we might want to relocate this open/close to outside here
-                outfilestream = open(outputfile,"a")
-                outfilestream.write("[+] FOUND NTLM - {}\n".format(url))
-                outfilestream.close()
+                with add_lock:
+                    print("[+] FOUND NTLM - {}".format(url))
+                    foundURLs.append(url)
+                    # here we open the file quick to write to it - we might want to relocate this open/close to outside here
+                    outfilestream = open(outputfile,"a")
+                    outfilestream.write("[+] FOUND NTLM - {}\n".format(url))
+                    outfilestream.close()
 
     except requests.exceptions.ReadTimeout:
         #print("\r", end='')
