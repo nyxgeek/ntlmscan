@@ -7,6 +7,7 @@
 /certprov/
 /certsrv/
 /conf/
+/debug/
 /deviceupdatefiles_ext/
 /deviceupdatefiles_int/
 /dialin/
