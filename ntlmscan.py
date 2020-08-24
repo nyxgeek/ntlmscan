@@ -32,91 +32,6 @@ def process_queue():
         queue.task_done()
 
 
-
-def main():
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--url", help="full url path to test")
-    parser.add_argument("--host", help="a single host to search for ntlm dirs on")
-    parser.add_argument("--hostfile", help="file containing ips or hostnames to test")
-    parser.add_argument("--outfile", help="file to write results to")
-    parser.add_argument("--dictionary", help="list of paths to test, default: paths.dict")
-    parser.add_argument("--nmap", help="run nmap when complete",action="store_true",default=False)
-    parser.add_argument("--debug", help="show request headers",action="store_true",default=False)
-    args = parser.parse_args()
-
-    #print help if no host arguments are supplied
-    if not (args.url or args.host or args.hostfile):
-        parser.print_help()
-        quit(1)
-    # check to see if a custom outfile has been specified
-    if args.outfile:
-        print("Output file set to {}".format(args.outfile))
-        global outputfile
-        outputfile = args.outfile
-
-    # check to see if a custom dictionary is set
-    if args.dictionary:
-        print("custom dictionary has been set to {}".format(args.dictionary))
-        global dictionaryfile
-        dictionaryfile = args.dictionary
-
-    # now that we have that sorted, load the dictionary into array called pathlist
-    #print("Using dictionary located at: {}".format(dictionaryfile))
-    pathdict = open(dictionaryfile, 'r')
-    pathlist = pathdict.readlines()
-    pathdict.close()
-
-    if args.debug:
-        global debugoutput
-        debugoutput = args.debug
-
-    if args.nmap:
-        global nmapscan
-        nmapscan = True
-
-
-   ## NOW, HERE ARE THE MAIN WORKHORSE FUNCTION CALLS ##
-
-    if args.url:
-        queue.put(args.url)
-
-
-    if args.host:
-        for urlpath in pathlist:
-            urlpath = urlpath.rstrip()
-            if urlpath.startswith("/"):
-                urlpath = urlpath[1:]
-            testurl = "https://" + args.host + "/" + urlpath
-            queue.put(testurl)
-
-
-    if args.hostfile:
-        hostfile = open(args.hostfile, 'r')
-        hostlist = hostfile.readlines()
-        hostfile.close()
-
-        for hostname in hostlist:
-            hostname = hostname.rstrip()
-
-            for urlpath in pathlist:
-                urlpath = urlpath.rstrip()
-                if urlpath.startswith("/"):
-                    urlpath = urlpath[1:]
-                testurl = "https://" + hostname + "/" + urlpath
-                queue.put(testurl)
-    # Get ready to queue some requests
-    for i in range(100):
-        t = threading.Thread(target=process_queue)
-        t.daemon = True
-        t.start()
-
-    queue.join()
-    print("\r\nTesting complete")
-
-    if nmapscan:
-        nmapScanner(foundURLs)
-
 def nmapScanner(foundURLs):
     #if nmap was selected, let's do some scans
     for targeturl in foundURLs:
@@ -145,10 +60,8 @@ def makeRequests(url):
                     print("[+] FOUND NTLM - {}".format(url))
                     foundURLs.append(url)
                     # here we open the file quick to write to it - we might want to relocate this open/close to outside here
-                    outfilestream = open(outputfile,"a")
-                    outfilestream.write("[+] FOUND NTLM - {}\n".format(url))
-                    outfilestream.close()
-
+                    with open(outputfile,"a") as outfilestream:
+                        outfilestream.write("[+] FOUND NTLM - {}\n".format(url))
     except requests.exceptions.ReadTimeout:
         #print("\r", end='')
         pass
@@ -159,4 +72,76 @@ def makeRequests(url):
 
 
 if __name__ == '__main__':
-        main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", help="full url path to test")
+    parser.add_argument("--host", help="a single host to search for ntlm dirs on")
+    parser.add_argument("--hostfile", help="file containing ips or hostnames to test")
+    parser.add_argument("--outfile", help="file to write results to")
+    parser.add_argument("--dictionary", help="list of paths to test, default: paths.dict")
+    parser.add_argument("--nmap", help="run nmap when complete", action="store_true", default=False)
+    parser.add_argument("--debug", help="show request headers", action="store_true", default=False)
+    parser.add_argument("--threads", help="Number of threads to use Default 100", type=int, default=100)
+    args = parser.parse_args()
+
+    # print help if no host arguments are supplied
+    if not (args.url or args.host or args.hostfile):
+        parser.print_help()
+        quit(1)
+    # check to see if a custom outfile has been specified
+    if args.outfile:
+        print("Output file set to {}".format(args.outfile))
+        outputfile = args.outfile
+
+    # check to see if a custom dictionary is set
+    if args.dictionary:
+        print("custom dictionary has been set to {}".format(args.dictionary))
+        dictionaryfile = args.dictionary
+
+    # now that we have that sorted, load the dictionary into array called pathlist
+    # print("Using dictionary located at: {}".format(dictionaryfile))
+    with open(dictionaryfile, 'r') as pathdict:
+        pathlist = pathdict.readlines()
+
+    if args.debug:
+        debugoutput = args.debug
+
+    if args.nmap:
+        nmapscan = True
+
+    ## NOW, HERE ARE THE MAIN WORKHORSE FUNCTION CALLS ##
+
+    if args.url:
+        queue.put(args.url)
+
+    if args.host:
+        for urlpath in pathlist:
+            urlpath = urlpath.rstrip()
+            if urlpath.startswith("/"):
+                urlpath = urlpath[1:]
+            testurl = "https://" + args.host + "/" + urlpath
+            queue.put(testurl)
+
+    if args.hostfile:
+        with open(args.hostfile, 'r') as hostfile:
+            hostlist = hostfile.readlines()
+
+        for hostname in hostlist:
+            hostname = hostname.rstrip()
+
+            for urlpath in pathlist:
+                urlpath = urlpath.rstrip()
+                if urlpath.startswith("/"):
+                    urlpath = urlpath[1:]
+                testurl = "https://" + hostname + "/" + urlpath
+                queue.put(testurl)
+    # Get ready to queue some requests
+    for i in range(args.threads):
+        t = threading.Thread(target=process_queue)
+        t.daemon = True
+        t.start()
+
+    queue.join()
+    print("\r\nTesting complete")
+
+    if args.nmap:
+        nmapScanner(foundURLs)
