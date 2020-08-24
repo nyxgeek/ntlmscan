@@ -47,7 +47,8 @@ def nmapScanner(foundURLs):
 def makeRequests(url):
     global foundURLs
     #print("\r[-] Testing path {}".format(url), end='')
-    print("[-] Testing path {}".format(url))
+    with add_lock:
+        print("[-] Testing path {}".format(url))
     try:
         r = requests.head(url, timeout=3,verify=False)
         if debugoutput:
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     parser.add_argument("--host", help="a single host to search for ntlm dirs on")
     parser.add_argument("--hostfile", help="file containing ips or hostnames to test")
     parser.add_argument("--outfile", help="file to write results to")
-    parser.add_argument("--dictionary", help="list of paths to test, default: paths.dict")
+    parser.add_argument("--dictionary", help="list of paths to test, default: paths.dict",default=os.path.dirname(__file__)+'paths.dict')
     parser.add_argument("--nmap", help="run nmap when complete", action="store_true", default=False)
     parser.add_argument("--debug", help="show request headers", action="store_true", default=False)
     parser.add_argument("--threads", help="Number of threads to use Default 100", type=int, default=100)
@@ -95,6 +96,8 @@ if __name__ == '__main__':
     if args.dictionary:
         print("custom dictionary has been set to {}".format(args.dictionary))
         dictionaryfile = args.dictionary
+        if not os.path.isfile(dictionaryfile):
+            dictionaryfile = os.path.dirname(__file__)+args.dictionary
 
     # now that we have that sorted, load the dictionary into array called pathlist
     # print("Using dictionary located at: {}".format(dictionaryfile))
