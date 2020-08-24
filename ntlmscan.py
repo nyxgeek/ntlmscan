@@ -11,7 +11,6 @@ import threading
 import requests
 from requests.exceptions import Timeout
 import argparse
-import sys
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from urllib.parse import urlparse
