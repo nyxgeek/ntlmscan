@@ -45,6 +45,10 @@ def main():
     parser.add_argument("--debug", help="show request headers",action="store_true",default=False)
     args = parser.parse_args()
 
+    #print help if no host arguments are supplied
+    if not (args.url or args.host or args.hostfile):
+        parser.print_help()
+        quit(1)
     # check to see if a custom outfile has been specified
     if args.outfile:
         print("Output file set to {}".format(args.outfile))
