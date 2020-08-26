@@ -77,7 +77,7 @@ if __name__ == '__main__':
     parser.add_argument("--host", help="a single host to search for ntlm dirs on")
     parser.add_argument("--hostfile", help="file containing ips or hostnames to test")
     parser.add_argument("--outfile", help="file to write results to")
-    parser.add_argument("--dictionary", help="list of paths to test, default: paths.dict",default=os.path.dirname(__file__)+'paths.dict')
+    parser.add_argument("--dictionary", help="list of paths to test, default: paths.dict",default=os.path.dirname(__file__)+'/paths.dict')
     parser.add_argument("--nmap", help="run nmap when complete", action="store_true", default=False)
     parser.add_argument("--debug", help="show request headers", action="store_true", default=False)
     parser.add_argument("--threads", help="Number of threads to use Default 100", type=int, default=100)
