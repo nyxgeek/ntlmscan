@@ -16,8 +16,10 @@
 /ews/
 /exchange/
 /exchweb/
-/hybridconfig/
 /groupexpansion/
+/hybridconfig/
+/iwa/authenticated.aspx
+/iwa/iwa_test.aspx
 /mcx/
 /mcx/mcxservice.svc
 /meet/
