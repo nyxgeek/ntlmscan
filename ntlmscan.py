@@ -49,13 +49,23 @@ def nmapScanner(foundURLs):
         print(returned_nmap)
 
 
-def makeRequests(url):
+def makeRequests(url_data):
     global foundURLs
+    url, force_ntlm, virtualhost = url_data
     # print("\r[-] Testing path {}".format(url), end='')
     with add_lock:
         print("[-] Testing path {}".format(url))
     try:
-        headers = {"Authorization": "NTLM TlRMTVNTUAABAAAAB4IIAAAAAAAAAAAAAAAAAAAAAAA="}
+        if virtualhost:
+            headers = {"Host": virtualhost}
+        else:
+            headers = {}
+        if force_ntlm:
+            # This checks for forced NTLM, which would show positive on every URL on the site
+            headers[
+                "Authorization"
+            ] = "NTLM TlRMTVNTUAABAAAAB4IIAAAAAAAAAAAAAAAAAAAAAAA="
+
         r = requests.head(url, timeout=3, headers=headers, verify=False)
         if debugoutput:
             print(r.headers)
@@ -63,11 +73,17 @@ def makeRequests(url):
             checkNTLM = r.headers["WWW-Authenticate"]
             if "NTLM" in checkNTLM:
                 with add_lock:
-                    print("[+] FOUND NTLM - {}".format(url))
+                    if force_ntlm:
+                        print(f"[+] FOUND FORCED NTLM - {url}")
+                    else:
+                        print("[+] FOUND NTLM - {}".format(url))
                     foundURLs.append(url)
                     # here we open the file quick to write to it - we might want to relocate this open/close to outside here
                     with open(outputfile, "a") as outfilestream:
-                        outfilestream.write("[+] FOUND NTLM - {}\n".format(url))
+                        if force_ntlm:
+                            outfilestream.write(f"[+] FOUND FORCED NTLM - {url}\n")
+                        else:
+                            outfilestream.write("[+] FOUND NTLM - {}\n".format(url))
     except requests.exceptions.ReadTimeout:
         # print("\r", end='')
         pass
@@ -81,6 +97,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", help="full url path to test")
     parser.add_argument("--host", help="a single host to search for ntlm dirs on")
+    parser.add_argument("--virtualhost", help="Virtualhost header to add to --host")
     parser.add_argument("--hostfile", help="file containing ips or hostnames to test")
     parser.add_argument("--outfile", help="file to write results to")
     parser.add_argument(
@@ -118,7 +135,7 @@ if __name__ == "__main__":
     # now that we have that sorted, load the dictionary into array called pathlist
     # print("Using dictionary located at: {}".format(dictionaryfile))
     with open(dictionaryfile, "r") as pathdict:
-        pathlist = pathdict.readlines()
+        pathlist = pathdict.readlines() + [""]
 
     if args.debug:
         debugoutput = args.debug
@@ -129,16 +146,26 @@ if __name__ == "__main__":
     ## NOW, HERE ARE THE MAIN WORKHORSE FUNCTION CALLS ##
 
     if args.url:
-        queue.put(args.url)
+        queue.put([args.url, False])
 
     if args.host:
         for urlpath in pathlist:
             urlpath = urlpath.rstrip()
             if urlpath.startswith("/"):
                 urlpath = urlpath[1:]
-            testurl = "https://" + args.host + "/" + urlpath
-            queue.put(testurl)
+            if args.host[:4] == "http":
+                testurl = args.host + "/" + urlpath
+            else:
+                testurl = "https://" + args.host + "/" + urlpath
 
+            queue.put([testurl, False, args.virtualhost])
+
+        if args.host[:4] == "http":
+            testurl = args.host + "/"
+        else:
+            testurl = "https://" + args.host + "/"
+
+        queue.put([testurl, True, args.virtualhost])
     if args.hostfile:
         with open(args.hostfile, "r") as hostfile:
             hostlist = hostfile.readlines()
@@ -150,8 +177,11 @@ if __name__ == "__main__":
                 urlpath = urlpath.rstrip()
                 if urlpath.startswith("/"):
                     urlpath = urlpath[1:]
-                testurl = "https://" + hostname + "/" + urlpath
-                queue.put(testurl)
+                if args.host[:4] == "http":
+                    testurl = args.host + "/" + urlpath
+                else:
+                    testurl = "https://" + args.host + "/" + urlpath
+                queue.put(testurl, False, args.virtualhost)
     # Get ready to queue some requests
     for i in range(args.threads):
         t = threading.Thread(target=process_queue)
