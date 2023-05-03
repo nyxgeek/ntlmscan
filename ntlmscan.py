@@ -177,11 +177,11 @@ if __name__ == "__main__":
                 urlpath = urlpath.rstrip()
                 if urlpath.startswith("/"):
                     urlpath = urlpath[1:]
-                if args.host[:4] == "http":
-                    testurl = args.host + "/" + urlpath
+                if hostname[:4] == "http":
+                    testurl = hostname + "/" + urlpath
                 else:
                     testurl = "https://" + args.host + "/" + urlpath
-                queue.put(testurl, False, args.virtualhost)
+                queue.put([testurl, False, args.virtualhost])
     # Get ready to queue some requests
     for i in range(args.threads):
         t = threading.Thread(target=process_queue)
