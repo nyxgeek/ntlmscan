@@ -180,7 +180,7 @@ if __name__ == "__main__":
                 if hostname[:4] == "http":
                     testurl = hostname + "/" + urlpath
                 else:
-                    testurl = "https://" + args.host + "/" + urlpath
+                    testurl = "https://" + hostname + "/" + urlpath
                 queue.put([testurl, False, args.virtualhost])
     # Get ready to queue some requests
     for i in range(args.threads):
