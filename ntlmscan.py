@@ -92,8 +92,7 @@ def makeRequests(url_data):
         # print("Unexpected error:", sys.exc_info()[0])
         pass
 
-
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", help="full url path to test")
     parser.add_argument("--host", help="a single host to search for ntlm dirs on")
@@ -193,3 +192,6 @@ if __name__ == "__main__":
 
     if args.nmap:
         nmapScanner(foundURLs)
+
+if __name__ == "__main__":
+    main()
