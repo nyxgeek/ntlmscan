@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ntlmscan"
+version = "0.1.0"
+description = "NTLM scanner - finds HTTP endpoints that advertise NTLM auth"
+readme = "README.md"
+license = { text = "BSD-3-Clause" }
+requires-python = ">=3.7"
+dependencies = [
+    "requests>=2.25.0",
+]
+
+[project.scripts]
+ntlmscan = "ntlmscan.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+ntlmscan = ["paths.dict"]
