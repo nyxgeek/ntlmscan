@@ -26,6 +26,24 @@ add_lock = threading.Lock()
 queue = Queue()
 
 
+def _default_dictionary_path():
+    """Resolve bundled paths.dict — works for direct script use, pip, pipx, and uv."""
+    # 1. Same directory as this script (direct use from repo root)
+    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "paths.dict")
+    if os.path.isfile(here):
+        return here
+    # 2. data-files install location (pip/pipx/uv put it at {prefix}/ntlmscan/paths.dict)
+    try:
+        import sysconfig
+        candidate = os.path.join(sysconfig.get_path("data"), "ntlmscan", "paths.dict")
+        if os.path.isfile(candidate):
+            return candidate
+    except Exception:
+        pass
+    # 3. Last resort — return the local path and let the open() fail with a clear error
+    return here
+
+
 def process_queue():
     while True:
         url = queue.get()
@@ -96,7 +114,9 @@ def makeRequests(url_data):
         pass
 
 
-if __name__ == "__main__":
+def main():
+    global outputfile, dictionaryfile, debugoutput, nmapscan
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", help="full url path to test")
     parser.add_argument("--host", help="a single host to search for ntlm dirs on")
@@ -110,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dictionary",
         help="list of paths to test, default: paths.dict",
-        default=os.path.dirname(os.path.abspath(__file__)) + "/paths.dict",
+        default=_default_dictionary_path(),
     )
     parser.add_argument(
         "--nmap", help="run nmap when complete", action="store_true", default=False
@@ -145,8 +165,8 @@ if __name__ == "__main__":
     if args.dictionary:
         print("custom dictionary has been set to {}".format(args.dictionary))
         dictionaryfile = args.dictionary
-        if not os.path.isfile(dictionaryfile):
-            dictionaryfile = os.path.dirname(__file__) + args.dictionary
+        if not os.path.isfile(dictionaryfile) and not os.path.isabs(args.dictionary):
+            dictionaryfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.dictionary)
 
     # now that we have that sorted, load the dictionary into array called pathlist
     # print("Using dictionary located at: {}".format(dictionaryfile))
@@ -170,7 +190,7 @@ if __name__ == "__main__":
     ## NOW, HERE ARE THE MAIN WORKHORSE FUNCTION CALLS ##
 
     if args.url:
-        queue.put([args.url, False])
+        queue.put([args.url, False, None])
 
     if args.host:
         host_has_scheme = args.host[:4] == "http" if len(args.host) >= 4 else False
@@ -250,3 +270,7 @@ if __name__ == "__main__":
         print(f"Total: {len(foundURLs)} URL(s)")
     else:
         print("\nNo NTLM URLs found.")
+
+
+if __name__ == "__main__":
+    main()

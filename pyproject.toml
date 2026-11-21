@@ -10,14 +10,16 @@ readme = "README.md"
 license = { text = "BSD-3-Clause" }
 requires-python = ">=3.7"
 dependencies = [
-    "requests>=2.25.0",
+    "requests>=2.32.0",
+    "urllib3>=2.0.7",
+    "certifi>=2023.7.22",
 ]
 
 [project.scripts]
-ntlmscan = "ntlmscan.__main__:main"
+ntlmscan = "ntlmscan:main"
 
-[tool.setuptools.packages.find]
-where = ["."]
+[tool.setuptools]
+py-modules = ["ntlmscan"]
 
-[tool.setuptools.package-data]
-ntlmscan = ["paths.dict"]
+[tool.setuptools.data-files]
+"ntlmscan" = ["paths.dict"]
